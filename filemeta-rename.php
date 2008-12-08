@@ -2,8 +2,8 @@
 /*
 Plugin Name: Attached File Meta Rename
 Plugin URI: http://holyarmy.org/benjamin/projects/filemeta-rename
-Description: I was moving blog content around on the filesystem and realized I needed a way to move not just the files but the meta pointers in the database.
-Version: 1.0
+Description: Provides a way to fix meta file pointers in the database after moving the files on the filesystem.
+Version: 1.0.0
 Author: Benjamin Sherman
 Author URI: http://holyarmy.org/benjamin/
 */
@@ -100,7 +100,7 @@ if (!class_exists('AttachedFileMetaRename')) {
 </style>
 <div class="wrap">
 <!-- <?php print_r($_POST); ?> -->
-<h2>Attached File Meta Renamer</h2>
+<h2>Attached File Meta Rename</h2>
 <p>This plugin will execute a database update on your wordpress attached file meta information.
 <ul>
 <li>It finds all matches of <em>Old Path</em> and replaces with <em>New Path</em>.</li>
@@ -253,13 +253,26 @@ if (!function_exists("AttachedFileMetaRename_ap")) {
     if (!isset($attachedFileMetaRename)) {
       return;
     }
-    if (function_exists('add_options_page')) {
+    if ( current_user_can('manage_options') && function_exists('add_options_page') ) {
       add_options_page('Attached File Meta Rename', 'File Meta Rename', 9, basename(__FILE__), array(&$attachedFileMetaRename, 'printAdminPage'));
+      add_filter('plugin_action_links', 'filemeta_rename_filter_plugin_actions', 10, 2);
     }
   }
 }
 
 if (isset($attachedFileMetaRename)) {
   add_action('admin_menu', 'AttachedFileMetaRename_ap');
+}
+
+function filemeta_rename_filter_plugin_actions($links, $file) {
+  static $this_plugin;
+
+  if ( !$this_plugin ) $this_plugin = plugin_basename(__FILE__);
+
+  if ( $file == $this_plugin ) {
+    $rename_link = '<a href="options-general.php?page=filemeta-rename.php">' . __('Rename') . '</a>';
+    $links = array_merge( array($rename_link), $links); // before other links
+  }
+  return $links;
 }
 ?>
